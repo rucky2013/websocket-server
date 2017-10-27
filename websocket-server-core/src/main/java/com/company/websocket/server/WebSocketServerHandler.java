@@ -1,9 +1,12 @@
 package com.company.websocket.server;
 
-import com.company.websocket.service.impl.BananaService;
-import com.company.websocket.util.MsgCode;
-import com.company.websocket.util.Request;
-import com.company.websocket.util.Response;
+import com.alibaba.fastjson.JSON;
+import com.company.biz.constant.BizEnumConstants;
+import com.company.websocket.context.BizChannelHandlerContext;
+import com.company.websocket.service.ChannelContainer;
+import com.company.websocket.service.ChannelHandler;
+import com.company.websocket.util.ClientRequest;
+import com.company.websocket.util.ServerResponse;
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import io.netty.buffer.ByteBuf;
@@ -19,8 +22,8 @@ import org.slf4j.LoggerFactory;
 /**
  * WebSocket服务端Handler
  */
-public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
-    private static final Logger LOG = LoggerFactory.getLogger(BananaWebSocketServerHandler.class.getName());
+public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+    private static final Logger LOG = LoggerFactory.getLogger(WebSocketServerHandler.class.getName());
 
     private WebSocketServerHandshaker handshaker;
     private ChannelHandlerContext ctx;
@@ -45,8 +48,8 @@ public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Ob
         LOG.error("WebSocket异常", cause);
         ctx.close();
         LOG.info(sessionId + " 	注销");
-        BananaService.logout(sessionId); // 注销
-        BananaService.notifyDownline(sessionId); // 通知有人下线
+        ChannelHandler.logout(sessionId); // 注销
+        ChannelHandler.notifyDownline(sessionId); // 通知有人下线
     }
 
     @Override
@@ -54,8 +57,8 @@ public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Ob
         LOG.info("WebSocket关闭");
         super.close(ctx, promise);
         LOG.info(sessionId + " 注销");
-        BananaService.logout(sessionId); // 注销
-        BananaService.notifyDownline(sessionId); // 通知有人下线
+        ChannelHandler.logout(sessionId); // 注销
+        ChannelHandler.notifyDownline(sessionId); // 通知有人下线
     }
 
     /**
@@ -110,34 +113,35 @@ public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Ob
 
         // 处理来自客户端的WebSocket请求
         try {
-            Request request = Request.create(((TextWebSocketFrame) frame).text());
-            Response response = new Response();
+            ClientRequest request = JSON.parseObject(((TextWebSocketFrame) frame).text() ,ClientRequest.class);
+            ServerResponse response = new ServerResponse();
             response.setServiceId(request.getServiceId());
-            if (MsgCode.online.code.intValue() == request.getServiceId()) { // 客户端注册
-                String requestId = request.getRequestId();
+            if (BizEnumConstants.ServiceIdEnum.online.code.intValue() == request.getServiceId()) { // 客户端注册
+                String requestId = request.getSessionId();
                 if (Strings.isNullOrEmpty(requestId)) {
                     response.setIsSucc(false).setMessage("requestId不能为空");
                     return;
-                } else if (Strings.isNullOrEmpty(request.getName())) {
+                } else if (Strings.isNullOrEmpty(request.getUserName())) {
                     response.setIsSucc(false).setMessage("name不能为空");
                     return;
-                } else if (BananaService.bananaWatchMap.containsKey(requestId)) {
+                } else if (ChannelContainer.GLOBAL_CHANNEL_MAP.containsKey(requestId)) {
                     response.setIsSucc(false).setMessage("您已经注册了，不能重复注册");
                     return;
                 }
-                if (!BananaService.register(requestId, new BananaService(ctx, request.getName()))) {
+                if (!ChannelHandler.register(requestId,
+                        new ChannelHandler( new BizChannelHandlerContext(  ctx, request.getUserName())))) {
                     response.setIsSucc(false).setMessage("注册失败");
                 } else {
                     response.setIsSucc(true).setMessage("注册成功");
 
-                    BananaService.bananaWatchMap.forEach((reqId, callBack) -> {
-                        response.getHadOnline().put(reqId, ((BananaService) callBack).getName()); // 将已经上线的人员返回
+                    ChannelContainer.GLOBAL_CHANNEL_MAP.forEach((reqId, callBack) -> {
+                        response.getHadOnline().put(reqId, ((ChannelHandler) callBack).getUserName()); // 将已经上线的人员返回
 
                         if (!reqId.equals(requestId)) {
-                            Request serviceRequest = new Request();
-                            serviceRequest.setServiceId(MsgCode.online.code);
-                            serviceRequest.setRequestId(requestId);
-                            serviceRequest.setName(request.getName());
+                            ClientRequest serviceRequest = new ClientRequest();
+                            serviceRequest.setServiceId(BizEnumConstants.ServiceIdEnum.online.code);
+                            serviceRequest.setSessionId(requestId);
+                            serviceRequest.setUserName(request.getUserName());
                             try {
                                 callBack.send(serviceRequest); // 通知有人上线
                             } catch (Exception e) {
@@ -146,24 +150,24 @@ public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Ob
                         }
                     });
                 }
-                sendWebSocket(response.toJson());
+                sendWebSocket(JSON.toJSONString( response ));
                 this.sessionId = requestId; // 记录会话id，当页面刷新或浏览器关闭时，注销掉此链路
-            } else if (MsgCode.send_message.code.intValue() == request.getServiceId()) { // 客户端发送消息到聊天群
-                String requestId = request.getRequestId();
+            } else if (BizEnumConstants.ServiceIdEnum.send_message.code.intValue() == request.getServiceId()) { // 客户端发送消息到聊天群
+                String requestId = request.getSessionId();
                 if (Strings.isNullOrEmpty(requestId)) {
                     response.setIsSucc(false).setMessage("requestId不能为空");
-                } else if (Strings.isNullOrEmpty(request.getName())) {
+                } else if (Strings.isNullOrEmpty(request.getUserName())) {
                     response.setIsSucc(false).setMessage("name不能为空");
                 } else if (Strings.isNullOrEmpty(request.getMessage())) {
                     response.setIsSucc(false).setMessage("message不能为空");
                 } else {
                     response.setIsSucc(true).setMessage("发送消息成功");
 
-                    BananaService.bananaWatchMap.forEach((reqId, callBack) -> { // 将消息发送到所有机器
-                        Request serviceRequest = new Request();
-                        serviceRequest.setServiceId(MsgCode.receive_message.code);
-                        serviceRequest.setRequestId(requestId);
-                        serviceRequest.setName(request.getName());
+                    ChannelContainer.GLOBAL_CHANNEL_MAP.forEach((reqId, callBack) -> { // 将消息发送到所有机器
+                        ClientRequest serviceRequest = new ClientRequest();
+                        serviceRequest.setServiceId(BizEnumConstants.ServiceIdEnum.receive_message.code);
+                        serviceRequest.setSessionId(requestId);
+                        serviceRequest.setUserName(request.getUserName());
                         serviceRequest.setMessage(request.getMessage());
                         try {
                             callBack.send(serviceRequest);
@@ -172,22 +176,22 @@ public class BananaWebSocketServerHandler extends SimpleChannelInboundHandler<Ob
                         }
                     });
                 }
-                sendWebSocket(response.toJson());
-            } else if (MsgCode.downline.code.intValue() == request.getServiceId()) { // 客户端下线
-                String requestId = request.getRequestId();
+                sendWebSocket(JSON.toJSONString( response ));
+            } else if (BizEnumConstants.ServiceIdEnum.downline.code.intValue() == request.getServiceId()) { // 客户端下线
+                String requestId = request.getSessionId();
                 if (Strings.isNullOrEmpty(requestId)) {
-                    sendWebSocket(response.setIsSucc(false).setMessage("requestId不能为空").toJson());
+                    sendWebSocket( JSON.toJSONString(  response.setIsSucc(false).setMessage("requestId不能为空") ));
                 } else {
-                    BananaService.logout(requestId);
+                    ChannelHandler.logout(requestId);
                     response.setIsSucc(true).setMessage("下线成功");
 
-                    BananaService.notifyDownline(requestId); // 通知有人下线
+                    ChannelHandler.notifyDownline(requestId); // 通知有人下线
 
-                    sendWebSocket(response.toJson());
+                    sendWebSocket(JSON.toJSONString( response ));
                 }
 
             } else {
-                sendWebSocket(response.setIsSucc(false).setMessage("未知请求").toJson());
+                sendWebSocket(JSON.toJSONString(  response.setIsSucc(false).setMessage("未知请求") ));
             }
         } catch (JsonSyntaxException e1) {
             LOG.warn("Json解析异常", e1);

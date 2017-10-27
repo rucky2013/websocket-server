@@ -10,7 +10,7 @@
 $(document).ready(function() {
 	var uuid = guid(); // uuid在一个会话唯一
 	var nameOnline = ''; // 上线姓名
-	var onlineName = new Map(); // 已上线人员, <requestId, name>
+	var onlineName = new Map(); // 已上线人员, <sessionId, usserName>
 	
 	$("#name").attr("disabled","disabled");
 	$("#onlineBtn").attr("disabled","disabled");
@@ -66,15 +66,15 @@ $(document).ready(function() {
 				if (request != undefined && request != null) {
 				    if (request.serviceId == 1001 || request.serviceId == 1004) { // 有人上线/下线
 					    if (request.serviceId == 1001) {
-							onlineName.put(request.requestId, request.name);
+							onlineName.put(request.sessionId, request.userName);
 						}
 						if (request.serviceId == 1004) {
-							onlineName.removeByKey(request.requestId);
+							onlineName.removeByKey(request.sessionId);
 						}
 					    
 						initOnline();
 					} else if (request.serviceId == 1003) { // 有人发消息
-					    appendBanana(request.name, request.message);
+					    appendBanana(request.userName, request.message);
 					}
 				}
 			}
@@ -128,12 +128,12 @@ $(document).ready(function() {
 
 		nameOnline = name;
 		// 上线
-		send(JSON.stringify({"requestId":uuid, "serviceId":1001, "name":name}));
+		send(JSON.stringify({"sessionId":uuid, "serviceId":1001, "userName":name}));
 	});
 	
 	$("#downlineBtn").bind("click", function() {
 		// 下线
-		send(JSON.stringify({"requestId":uuid, "serviceId":1004}));
+		send(JSON.stringify({"sessionId":uuid, "serviceId":1004}));
 	});
 	
 	$("#sendBtn").bind("click", function() {
@@ -144,7 +144,7 @@ $(document).ready(function() {
 	    }
 		
 		// 发送聊天消息
-		send(JSON.stringify({"requestId":uuid, "serviceId":1002, "name":nameOnline, "message":message}));
+		send(JSON.stringify({"sessionId":uuid, "serviceId":1002, "userName":nameOnline, "message":message}));
 		$("#messageInput").val("");
 	});
 	
