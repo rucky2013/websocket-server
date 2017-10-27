@@ -20,7 +20,6 @@
     </appender>
 
     <logger name='org.springframework' level="INFO" />
-    <logger name='com.best.neptune.messenger.socket' level="INFO" />
     <root>
         <level value='info'/>
         <appender-ref ref='FILE'/>

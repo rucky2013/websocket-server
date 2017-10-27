@@ -1,6 +1,7 @@
 package com.company.websocket.server;
 
 
+import com.company.websocket.util.ResourceHelper;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -13,17 +14,21 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 
 /**
  * WebSocket服务
  */
-public class WebSocketServer {
+
+@Component
+public class WebSocketServer{
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketServer.class);
 
     // websocket端口
-    public static final int WEBSOCKET_PORT = 9090;
+    public static final int WEBSOCKET_PORT = ResourceHelper.getInstance().getIntValue("websocket.port");
 
-    public void run(int port) throws Exception {
+    public void start(int port) throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -36,7 +41,7 @@ public class WebSocketServer {
                     pipeline.addLast("http-codec", new HttpServerCodec()); // Http消息编码解码
                     pipeline.addLast("aggregator", new HttpObjectAggregator(65536)); // Http消息组装
                     pipeline.addLast("http-chunked", new ChunkedWriteHandler()); // WebSocket通信支持
-                    pipeline.addLast("handler", new BananaWebSocketServerHandler()); // WebSocket服务端Handler
+                    pipeline.addLast("handler", new WebSocketServerHandler()); // WebSocket服务端Handler
                 }
             });
 
@@ -48,5 +53,6 @@ public class WebSocketServer {
             workerGroup.shutdownGracefully();
         }
     }
+
 
 }
