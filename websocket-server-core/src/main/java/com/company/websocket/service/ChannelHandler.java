@@ -10,6 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+
+/***
+ *
+ */
 public class ChannelHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ChannelHandler.class);
 
@@ -25,14 +29,14 @@ public class ChannelHandler {
     /**
      *
      * @param requestId
-     * @param callBack
+     * @param channelHandler
      * @return
      */
-    public static boolean register(String requestId, ChannelHandler callBack) {
+    public static boolean register(String requestId, ChannelHandler channelHandler) {
         if (Strings.isNullOrEmpty(requestId) || ChannelContainer.GLOBAL_CHANNEL_MAP.containsKey(requestId)) {
             return false;
         }
-        ChannelContainer.GLOBAL_CHANNEL_MAP.put(requestId, callBack);
+        ChannelContainer.GLOBAL_CHANNEL_MAP.put(requestId, channelHandler);
         return true;
     }
 
@@ -61,12 +65,12 @@ public class ChannelHandler {
      * @param requestId
      */
     public static void notifyDownline(String requestId) {
-        ChannelContainer.GLOBAL_CHANNEL_MAP.forEach((reqId, callBack) -> { // 通知有人下线
+        ChannelContainer.GLOBAL_CHANNEL_MAP.forEach((reqId, channelHandler) -> { // 通知有人下线
             ClientRequest serviceRequest = new ClientRequest();
             serviceRequest.setServiceId(BizEnumConstants.ServiceIdEnum.downline.code);
             serviceRequest.setSessionId(requestId);
             try {
-                callBack.send(serviceRequest);
+                channelHandler.send(serviceRequest);
             } catch (Exception e) {
                 LOG.warn("回调发送消息给客户端异常", e);
             }
