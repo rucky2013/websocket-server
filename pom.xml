@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.company.websocket</groupId>
-    <artifactId>websocket-server</artifactId>
+    <artifactId>v6-websocket</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>websocket-server-core</module>
+        <module>v6-websocket-server</module>
     </modules>
 
     <properties>
@@ -34,9 +34,9 @@
             </activation>
             <properties>
                 <appName>sparkDemo20171024</appName>
-                <jdbc.url>jdbc:oracle:thin:@oradevdb2.800best.com:1521:orauat</jdbc.url>
-                <jdbc.user>kyjsdev</jdbc.user>
-                <jdbc.pwd>orakyjsdev</jdbc.pwd>
+                <jdbc.url>jdbc:oracle:thin:@oratest1.800best.com:1521/ORATEST1</jdbc.url>
+                <jdbc.user>ltlv5dev</jdbc.user>
+                <jdbc.pwd>oraltlv5dev</jdbc.pwd>
                 <kafka.brokers>10.45.8.125:9092,10.45.8.126:9092,10.45.8.127:9092</kafka.brokers>
                 <kafka.offset.manager.zookeeper.server>10.45.8.125,10.45.8.126,10.45.8.127</kafka.offset.manager.zookeeper.server>
                 <kafka.offset.manager.zookeeper.port>2181</kafka.offset.manager.zookeeper.port>
@@ -55,9 +55,9 @@
             </activation>
             <properties>
                 <appName>sparkDemo20171024</appName>
-                <jdbc.url>jdbc:oracle:thin:@oradevdb2.800best.com:1521:orauat</jdbc.url>
-                <jdbc.user>kyjstest</jdbc.user>
-                <jdbc.pwd>orakyjsdtest</jdbc.pwd>
+                <jdbc.url>jdbc:oracle:thin:@//oratest1.800best.com:1521:ORATEST1</jdbc.url>
+                <jdbc.user>ltlv5dev</jdbc.user>
+                <jdbc.pwd>oraltlv5dev</jdbc.pwd>
                 <kafka.brokers>10.45.8.125:9092,10.45.8.126:9092,10.45.8.127:9092</kafka.brokers>
                 <kafka.offset.manager.zookeeper.server>10.45.8.125,10.45.8.126,10.45.8.127</kafka.offset.manager.zookeeper.server>
                 <kafka.offset.manager.zookeeper.port>2181</kafka.offset.manager.zookeeper.port>
@@ -76,9 +76,9 @@
             </activation>
             <properties>
                 <appName>sparkDemo20171024</appName>
-                <jdbc.url>jdbc:oracle:thin:@oradevdb2.800best.com:1521:orauat</jdbc.url>
-                <jdbc.user>kyjsdev</jdbc.user>
-                <jdbc.pwd>orakyjsdev</jdbc.pwd>
+                <jdbc.url>jdbc:oracle:thin:@//oratest1.800best.com:1521:ORATEST1</jdbc.url>
+                <jdbc.user>ltlv5dev</jdbc.user>
+                <jdbc.pwd>oraltlv5dev</jdbc.pwd>
                 <kafka.brokers>10.45.8.125:9092,10.45.8.126:9092,10.45.8.127:9092</kafka.brokers>
                 <kafka.offset.manager.zookeeper.server>10.45.8.125,10.45.8.126,10.45.8.127</kafka.offset.manager.zookeeper.server>
                 <kafka.offset.manager.zookeeper.port>2181</kafka.offset.manager.zookeeper.port>

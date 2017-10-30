@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.company.biz.dao.CtCantonInfoDAO" >
+  <resultMap id="BaseResultMap" type="com.company.biz.model.CtCantonInfo" >
+    <result column="ID" property="id" jdbcType="INTEGER" />
+    <result column="CANTON_CODE" property="cantonCode" jdbcType="VARCHAR" />
+    <result column="CANTON_NAME" property="cantonName" jdbcType="VARCHAR" />
+    <result column="PARENT" property="parent" jdbcType="INTEGER" />
+    <result column="TYPE" property="type" jdbcType="INTEGER" />
+    <result column="PROVINCE" property="province" jdbcType="VARCHAR" />
+    <result column="CITY" property="city" jdbcType="VARCHAR" />
+    <result column="COUNTY" property="county" jdbcType="VARCHAR" />
+    <result column="TOWNSHIP" property="township" jdbcType="VARCHAR" />
+    <result column="VILLAGE" property="village" jdbcType="VARCHAR" />
+    <result column="LOCK_VERSION" property="lockVersion" jdbcType="INTEGER" />
+    <result column="CREATED_TIME" property="createdTime" jdbcType="TIMESTAMP" />
+    <result column="UPDATED_TIME" property="updatedTime" jdbcType="TIMESTAMP" />
+    <result column="CREATOR_ID" property="creatorId" jdbcType="INTEGER" />
+    <result column="CREATOR_NAME" property="creatorName" jdbcType="VARCHAR" />
+    <result column="UPDATER_ID" property="updaterId" jdbcType="INTEGER" />
+    <result column="UPDATER_NAME" property="updaterName" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    ID, CANTON_CODE, CANTON_NAME, PARENT, TYPE, PROVINCE,  CITY, COUNTY, TOWNSHIP,
+    VILLAGE, LOCK_VERSION, CREATED_TIME,
+    UPDATED_TIME, CREATOR_ID, CREATOR_NAME,
+    UPDATER_ID, UPDATER_NAME
+  </sql>
+
+  <select id="selectCantonsByIdDown" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    connect by parent= prior id
+    start with ID = #{id,jdbcType=INTEGER}
+  </select>
+
+  <select id="selectCantonsByIdUp" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    connect by prior parent = id
+    start with id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <select id="selectCantonsById" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    WHERE ID = #{id,jdbcType=INTEGER}
+  </select>
+
+  <select id="getCantonByName" parameterType="string" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    WHERE CANTON_NAME = #{cantonName,jdbcType=VARCHAR}
+    AND ROWNUM=1
+  </select>
+
+  <select id="getCantonByNameAndType" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    WHERE CANTON_NAME = #{cantonName,jdbcType=VARCHAR} AND type = #{type,jdbcType = INTEGER}
+    <if test="parent != null">
+      AND PARENT = #{parent,jdbcType=INTEGER}
+    </if>
+    AND ROWNUM=1
+  </select>
+
+  <select id="queryCtCantonInfoListByIdList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from CT_CANTON_INFO
+    WHERE ID IN
+    <foreach collection="cantonIdList" index="index" item="id"
+             open="(" separator="," close=")">
+      #{id ,jdbcType=INTEGER}
+    </foreach>
+  </select>
+
+</mapper>
